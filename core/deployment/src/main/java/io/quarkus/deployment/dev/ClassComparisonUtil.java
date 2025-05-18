@@ -130,10 +130,12 @@ public class ClassComparisonUtil {
         }
         List<AnnotationInstance> method1 = new ArrayList<>();
         Map<Integer, List<AnnotationInstance>> params1 = new HashMap<>();
-        methodMap(a, method1, params1);
+        Map<Integer, List<AnnotationInstance>> paramTypes1 = new HashMap<>();
+        methodMap(a, method1, params1, paramTypes1);
         List<AnnotationInstance> method2 = new ArrayList<>();
         Map<Integer, List<AnnotationInstance>> params2 = new HashMap<>();
-        methodMap(b, method2, params2);
+        Map<Integer, List<AnnotationInstance>> paramTypes2 = new HashMap<>();
+        methodMap(b, method2, params2, paramTypes2);
         if (!compareAnnotations(method1, method2)) {
             return false;
         }
@@ -146,11 +148,17 @@ public class ClassComparisonUtil {
                 return false;
             }
         }
+        for (Map.Entry<Integer, List<AnnotationInstance>> entry : paramTypes1.entrySet()) {
+            List<AnnotationInstance> other = paramTypes2.get(entry.getKey());
+            if (!compareAnnotations(other, entry.getValue())) {
+                return false;
+            }
+        }
         return true;
     }
 
     private static void methodMap(Collection<AnnotationInstance> b, List<AnnotationInstance> method2,
-            Map<Integer, List<AnnotationInstance>> params2) {
+            Map<Integer, List<AnnotationInstance>> params2, Map<Integer, List<AnnotationInstance>> paramTypes2) {
         for (AnnotationInstance i : b) {
             int index;
             switch (i.target().kind()) {
@@ -165,7 +173,7 @@ public class ClassComparisonUtil {
                     TypeTarget.Usage usage = i.target().asType().usage();
                     if (usage == TypeTarget.Usage.METHOD_PARAMETER) {
                         index = i.target().asType().asMethodParameterType().position();
-                        params2.computeIfAbsent(index, k -> new ArrayList<>()).add(i);
+                        paramTypes2.computeIfAbsent(index, k -> new ArrayList<>()).add(i);
                     } else {
                         throw new IllegalArgumentException("Unsupported type annotation usage: " + usage);
                     }
